@@ -2,9 +2,8 @@
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
 
-#include <THC/THC.h>
-#include <THC/THCAtomics.cuh>
-#include <THC/THCDeviceUtils.cuh>
+#include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/CUDAUtils.h>
 
 #include "./vision.h"
 
@@ -78,9 +77,9 @@ __global__ void ARF_backward_cuda_kernel(
 
 at::Tensor ARF_forward_cuda(const at::Tensor& weight,
                             const at::Tensor& indices) {
-  AT_ASSERTM(weight.ndimension() == 5, "only supports a batch of ARFs.");
-  AT_ASSERTM(weight.type().is_cuda(), "input must be a CUDA tensor");
-  AT_ASSERTM(indices.type().is_cuda(), "rois must be a CUDA tensor");
+  TORCH_CHECK(weight.ndimension() == 5, "only supports a batch of ARFs.");
+  TORCH_CHECK(weight.type().is_cuda(), "input must be a CUDA tensor");
+  TORCH_CHECK(indices.type().is_cuda(), "rois must be a CUDA tensor");
 
   const uint16 nOutputPlane = weight.size(0);
   const uint16 nInputPlane = weight.size(1);
@@ -94,11 +93,11 @@ at::Tensor ARF_forward_cuda(const at::Tensor& weight,
   const long output_size = nOutputPlane * nInputPlane * nEntry;
 
   cudaStream_t stream = at::cuda::getCurrentCUDAStream();
-  dim3 grid(std::min(THCCeilDiv(output_size, 512L), 4096L));
+  dim3 grid(std::min((output_size + 512 - 1) / 512, 4096L));
   dim3 block(512);
 
   if (output.numel() == 0) {
-    THCudaCheck(cudaGetLastError());
+    cudaGetLastError();
     return output;
   }
 
@@ -114,15 +113,15 @@ at::Tensor ARF_forward_cuda(const at::Tensor& weight,
          nEntry,
          output.contiguous().data<scalar_t>());
   });
-  THCudaCheck(cudaGetLastError());
+      cudaGetLastError();
   return output;
 }
 
 
 at::Tensor ARF_backward_cuda(const at::Tensor& indices,
                              const at::Tensor& gradOutput) {
-  AT_ASSERTM(indices.type().is_cuda(), "input must be a CPU tensor");
-  AT_ASSERTM(gradOutput.type().is_cuda(), "rois must be a CPU tensor");
+  TORCH_CHECK(indices.type().is_cuda(), "input must be a CPU tensor");
+  TORCH_CHECK(gradOutput.type().is_cuda(), "rois must be a CPU tensor");
 
   const uint8 nOrientation = indices.size(0);
   const uint8 kH = indices.size(1);
@@ -137,12 +136,12 @@ at::Tensor ARF_backward_cuda(const at::Tensor& indices,
 
   cudaStream_t stream = at::cuda::getCurrentCUDAStream();
 
-  dim3 grid(std::min(THCCeilDiv(count, 512L), 4096L));
+  dim3 grid(std::min((count + 512 - 1) / 512, 4096L));
   dim3 block(512);
 
   // handle possibly empty gradients
   if (gradOutput.numel() == 0) {
-    THCudaCheck(cudaGetLastError());
+    cudaGetLastError();
     return gradWeight;
   }
 
@@ -158,6 +157,6 @@ at::Tensor ARF_backward_cuda(const at::Tensor& indices,
          nEntry,
          gradWeight.contiguous().data<scalar_t>());
   });
-  THCudaCheck(cudaGetLastError());
+      cudaGetLastError();
   return gradWeight;
 }

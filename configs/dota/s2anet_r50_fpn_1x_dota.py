@@ -153,6 +153,6 @@ log_config = dict(
 total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-load_from = None
+load_from = 'checkpoints/s2anet_r50_fpn_1x_converted-11c9c5f4.pth'
 resume_from = None
 workflow = [('train', 1)]

@@ -102,6 +102,13 @@ def make_cuda_ext(name, module, sources):
                 '-D__CUDA_NO_HALF_OPERATORS__',
                 '-D__CUDA_NO_HALF_CONVERSIONS__',
                 '-D__CUDA_NO_HALF2_OPERATORS__',
+                '--generate-code=arch=compute_89,code=sm_89',  # RTX 4070 support
+                '--generate-code=arch=compute_86,code=sm_86',  # RTX 30xx series support
+                '--generate-code=arch=compute_80,code=sm_80',  # RTX 20xx series support
+                '--generate-code=arch=compute_75,code=sm_75',  # RTX 16xx series support
+                '--generate-code=arch=compute_70,code=sm_70',  # V100 support
+                '--generate-code=arch=compute_61,code=sm_61',  # GTX 10xx series support
+                '--generate-code=arch=compute_60,code=sm_60',  # GTX 9xx series support
             ]
         })
 

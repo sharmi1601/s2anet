@@ -2,9 +2,8 @@
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
 
-#include <THC/THC.h>
-#include <THC/THCAtomics.cuh>
-#include <THC/THCDeviceUtils.cuh>
+#include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/CUDAUtils.h>
 
 #include "./vision.h"
 
@@ -86,10 +85,10 @@ __global__ void RIE_backward_cuda_kernel(
 
 std::tuple<at::Tensor, at::Tensor> RIE_forward_cuda(const at::Tensor& feature,
                                                     const uint8 nOrientation) {
-  AT_ASSERTM(feature.ndimension() == 4, "only supports batch mode.");
+  TORCH_CHECK(feature.ndimension() == 4, "only supports batch mode.");
   // #MODIFIED
-  // AT_ASSERTM(feature.size(2) == 1 && feature.size(3) == 1, "mH x mW should be 1x1.");
-  AT_ASSERTM(feature.type().is_cuda(), "input must be a CUDA tensor");
+  // TORCH_CHECK(feature.size(2) == 1 && feature.size(3) == 1, "mH x mW should be 1x1.");
+  TORCH_CHECK(feature.type().is_cuda(), "input must be a CUDA tensor");
 
   const uint16 nBatch = feature.size(0);
   const uint16 nChannel = feature.size(1);
@@ -101,11 +100,11 @@ std::tuple<at::Tensor, at::Tensor> RIE_forward_cuda(const at::Tensor& feature,
   const long count = nBatch * nFeature;
 
   cudaStream_t stream = at::cuda::getCurrentCUDAStream();
-  dim3 grid(std::min(THCCeilDiv(count, 512L), 4096L));
+  dim3 grid(std::min((count + 512 - 1) / 512, 4096L));
   dim3 block(512);
 
   if (mainDirection.numel() == 0) {
-    THCudaCheck(cudaGetLastError());
+    cudaGetLastError();
     return std::make_tuple(mainDirection, aligned);
   }
 
@@ -119,7 +118,7 @@ std::tuple<at::Tensor, at::Tensor> RIE_forward_cuda(const at::Tensor& feature,
          mainDirection.contiguous().data<uint8_t>(),
          aligned.contiguous().data<scalar_t>());
   });
-  THCudaCheck(cudaGetLastError());
+      cudaGetLastError();
   return std::make_tuple(mainDirection, aligned);
 }
 
@@ -127,8 +126,8 @@ std::tuple<at::Tensor, at::Tensor> RIE_forward_cuda(const at::Tensor& feature,
 at::Tensor RIE_backward_cuda(const at::Tensor& mainDirection,
                              const at::Tensor& gradOutput,
                              const uint8 nOrientation) {
-  AT_ASSERTM(mainDirection.type().is_cuda(), "input must be a CPU tensor");
-  AT_ASSERTM(gradOutput.type().is_cuda(), "rois must be a CPU tensor");
+  TORCH_CHECK(mainDirection.type().is_cuda(), "input must be a CPU tensor");
+  TORCH_CHECK(gradOutput.type().is_cuda(), "rois must be a CPU tensor");
 
   const uint16 nBatch = mainDirection.size(0);
   const uint16 nFeature = mainDirection.size(1);
@@ -138,12 +137,12 @@ at::Tensor RIE_backward_cuda(const at::Tensor& mainDirection,
   const long count = nBatch * nFeature;
 
   cudaStream_t stream = at::cuda::getCurrentCUDAStream();
-  dim3 grid(std::min(THCCeilDiv(count, 512L), 4096L));
+  dim3 grid(std::min((count + 512 - 1) / 512, 4096L));
   dim3 block(512);
 
   // handle possibly empty gradients
   if (gradOutput.numel() == 0) {
-    THCudaCheck(cudaGetLastError());
+    cudaGetLastError();
     return gradInput;
   }
 
@@ -157,6 +156,6 @@ at::Tensor RIE_backward_cuda(const at::Tensor& mainDirection,
          nOrientation,
          gradInput.contiguous().data<scalar_t>());
   });
-  THCudaCheck(cudaGetLastError());
+      cudaGetLastError();
   return gradInput;
 }
