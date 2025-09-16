@@ -1,0 +1,52 @@
+2025-09-16 00:54:40,238 - mmdet - INFO - Distributed training: False
+2025-09-16 00:54:43,786 - mmdet - INFO - Automatic scaling of learning rate (LR) has been disabled.
+2025-09-16 00:54:46,684 - mmdet - INFO - Start running, host: sharm@sharmi, work_dir: C:\runs\s2anet_base12_quick
+2025-09-16 00:54:46,685 - mmdet - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_epoch:
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+2025-09-16 00:54:46,685 - mmdet - INFO - workflow: [('train', 1)], max: 12 epochs
+2025-09-16 00:54:46,685 - mmdet - INFO - Checkpoints will be saved to C:\runs\s2anet_base12_quick by HardDiskBackend.
+2025-09-16 00:55:54,027 - mmdet - INFO - Epoch [1][50/3503]	lr: 3.987e-03, eta: 15:42:25, time: 1.347, data_time: 0.415, memory: 3066, fam.loss_cls: 246.3339, fam.loss_bbox: 2.3096, odm.loss_cls: 435.0320, odm.loss_bbox: 7.6843, loss: 691.3597, grad_norm: 3252.8369

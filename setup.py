@@ -97,7 +97,7 @@ def make_cuda_ext(name, module, sources):
         sources=[os.path.join(*module.split('.'), p) for p in sources],
         define_macros=define_macros,
         extra_compile_args={
-            'cxx': [],
+            'cxx': ['-std=c++14'],
             'nvcc': [
                 '-D__CUDA_NO_HALF_OPERATORS__',
                 '-D__CUDA_NO_HALF_CONVERSIONS__',
@@ -109,6 +109,8 @@ def make_cuda_ext(name, module, sources):
                 '--generate-code=arch=compute_70,code=sm_70',  # V100 support
                 '--generate-code=arch=compute_61,code=sm_61',  # GTX 10xx series support
                 '--generate-code=arch=compute_60,code=sm_60',  # GTX 9xx series support
+                '--std=c++14',
+                '-Xcompiler', '-fPIC'
             ]
         })
 

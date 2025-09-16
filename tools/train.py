@@ -9,10 +9,12 @@ import torch
 from mmcv import Config
 
 from mmdet import __version__
-from mmdet.apis import (get_root_logger, init_dist, set_random_seed,
+from mmdet.apis import (get_root_logger, set_random_seed,
                         train_detector)
+from mmcv.runner import init_dist
 from mmdet.datasets import build_dataset
 from mmdet.models import build_detector
+import mmrotate  # Import MMRotate to register S2A-Net models
 
 warnings.filterwarnings("ignore")
 
@@ -58,7 +60,8 @@ def main():
     # set cudnn_benchmark
     if cfg.get('cudnn_benchmark', False):
         torch.backends.cudnn.benchmark = True
-        # work_dir is determined in this priority: CLI > segment in file > filename
+        
+    # work_dir is determined in this priority: CLI > segment in file > filename
     if args.work_dir is not None:
         # update configs according to CLI args if args.work_dir is not None
         cfg.work_dir = args.work_dir
@@ -68,11 +71,13 @@ def main():
                                 osp.splitext(osp.basename(args.config))[0])
     if args.resume_from is not None:
         cfg.resume_from = args.resume_from
-    cfg.gpus = args.gpus
+    
+    # Set gpu_ids for newer MMDetection versions
+    cfg.gpu_ids = range(args.gpus)
 
     if args.autoscale_lr:
         # apply the linear scaling rule (https://arxiv.org/abs/1706.02677)
-        cfg.optimizer['lr'] = cfg.optimizer['lr'] * cfg.gpus / 8
+        cfg.optimizer['lr'] = cfg.optimizer['lr'] * args.gpus / 8
 
     # init distributed env first, since logger depends on the dist info.
     if args.launcher == 'none':
@@ -90,8 +95,7 @@ def main():
         logger.info('Set random seed to {}'.format(args.seed))
         set_random_seed(args.seed)
 
-    model = build_detector(
-        cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
+    model = build_detector(cfg.model)
 
     datasets = [build_dataset(cfg.data.train)]
     if len(cfg.workflow) == 2:
@@ -110,8 +114,7 @@ def main():
         datasets,
         cfg,
         distributed=distributed,
-        validate=args.validate,
-        logger=logger)
+        validate=args.validate)
 
 
 if __name__ == '__main__':
